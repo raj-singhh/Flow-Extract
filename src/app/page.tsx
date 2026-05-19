@@ -36,30 +36,31 @@ export default function FlowExtract() {
 
     try {
       for (const file of files) {
-        // Read file as Data URI to send to the AI
+        // Read file as Data URI
         const fileDataUri = await readFileAsDataUri(file);
         
-        // Execute GenAI Flow with the real file data
+        // Execute GenAI Flow
         const extraction = await extractResumeDetails({
           fileDataUri,
           extractConfig: config,
         });
         
-        if (extraction) {
+        if (extraction && (extraction.email || extraction.phone || extraction.skills || extraction.experience)) {
           results.push(extraction);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Partial Extraction",
+            description: `Could not identify candidate data in ${file.name}.`,
+          });
         }
       }
       
       if (results.length > 0) {
         setCandidates((prev) => [...results, ...prev]);
         toast({
-          title: "Extraction Complete",
-          description: `Successfully processed ${results.length} resume(s).`,
-        });
-      } else {
-        toast({
-          title: "No Data Found",
-          description: "Could not extract information from the provided files.",
+          title: "Extraction Successful",
+          description: `Processed ${results.length} candidate(s).`,
         });
       }
     } catch (error: any) {
@@ -103,7 +104,6 @@ export default function FlowExtract() {
       <ExtractionConfigBar config={config} onChange={handleConfigChange} />
       
       <div className="flex-1 flex flex-col">
-        {/* Dynamic Header Space */}
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
           <h2 className="text-4xl md:text-5xl font-headline font-bold mb-4 tracking-tight animate-in fade-in slide-in-from-top-4 duration-500">
             Resume Data <span className="text-primary">Extraction</span>
@@ -113,17 +113,13 @@ export default function FlowExtract() {
           </p>
         </div>
 
-        {/* Aggregated View */}
         <ContactAggregator emails={aggregatedEmails} phones={aggregatedPhones} />
         
-        {/* Drop Zone */}
         <ResumeDropZone onFilesDropped={processFiles} isProcessing={isProcessing} />
         
-        {/* Result Table */}
         <CandidateTable candidates={candidates} config={config} isProcessing={isProcessing} />
       </div>
 
-      {/* Subtle Footer */}
       <footer className="py-8 border-t border-border/50 text-center text-xs text-muted-foreground font-headline tracking-widest uppercase">
         FlowExtract &copy; {new Date().getFullYear()} — Powered by Advanced AI
       </footer>

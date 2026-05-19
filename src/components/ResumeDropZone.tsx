@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResumeDropZoneProps {
   onFilesDropped: (files: File[]) => void;
@@ -10,19 +11,21 @@ interface ResumeDropZoneProps {
 }
 
 export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneProps) {
+  const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
 
   const isValidFile = (file: File) => {
-    const extension = file.name.split('.').pop()?.toLowerCase();
+    const extension = file.name?.split('.').pop()?.toLowerCase() || '';
     const validExtensions = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'webp'];
     const validMimeTypes = [
       "text/plain",
       "application/pdf",
       "image/jpeg",
       "image/png",
-      "image/webp"
+      "image/webp",
+      "application/octet-stream"
     ];
-    return validExtensions.includes(extension || '') || validMimeTypes.includes(file.type);
+    return validExtensions.includes(extension) || validMimeTypes.includes(file.type);
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -39,12 +42,45 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
     e.preventDefault();
     setIsDragging(false);
     
-    const files = Array.from(e.dataTransfer.files).filter(isValidFile);
-
-    if (files.length > 0) {
-      onFilesDropped(files);
+    // Check if the user dropped a URL (like a Gmail attachment chip) instead of a file
+    const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+    if (url && url.includes('mail-attachment.googleusercontent.com') && e.dataTransfer.files.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Attachment Link Detected",
+        description: "Please download the attachment to your computer first, then drag the file here.",
+      });
+      return;
     }
-  }, [onFilesDropped]);
+
+    const droppedFiles: File[] = [];
+    
+    // More robust file extraction from items
+    if (e.dataTransfer.items) {
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        if (e.dataTransfer.items[i].kind === 'file') {
+          const file = e.dataTransfer.items[i].getAsFile();
+          if (file && isValidFile(file)) {
+            droppedFiles.push(file);
+          }
+        }
+      }
+    } else {
+      // Fallback
+      const files = Array.from(e.dataTransfer.files).filter(isValidFile);
+      droppedFiles.push(...files);
+    }
+
+    if (droppedFiles.length > 0) {
+      onFilesDropped(droppedFiles);
+    } else if (e.dataTransfer.files.length > 0 || e.dataTransfer.items.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Unsupported File",
+        description: "Please drop PDF, Image, or Text resumes only.",
+      });
+    }
+  }, [onFilesDropped, toast]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []).filter(isValidFile);
@@ -77,7 +113,6 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
           disabled={isProcessing}
         />
         
-        {/* Decorative Background Elements */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-32 h-32 bg-primary blur-3xl -translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary blur-3xl translate-x-1/2 translate-y-1/2" />
@@ -119,7 +154,6 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
           </div>
         </div>
 
-        {/* Pulsing Border Effect for Drag State */}
         {isDragging && (
           <div className="absolute inset-0 border-4 border-primary/20 rounded-3xl animate-pulse" />
         )}
