@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A Genkit flow for extracting specific details from resume text.
+ * @fileOverview A Genkit flow for extracting specific details from resume files using multi-modal AI.
  *
  * - extractResumeDetails - A function that handles the resume details extraction process.
  * - ExtractResumeDetailsInput - The input type for the extractResumeDetails function.
@@ -11,7 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const ExtractResumeDetailsInputSchema = z.object({
-  resumeContent: z.string().describe('The full text content of the resume from which to extract information.'),
+  fileDataUri: z.string().describe("The resume file as a data URI (PDF, Image, or Text). Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   extractConfig: z.object({
     email: z.boolean().optional().describe('Whether to extract the primary email address.'),
     phone: z.boolean().optional().describe('Whether to extract the primary phone number.'),
@@ -43,13 +43,11 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   name: 'extractResumeDetailsPrompt',
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
-  prompt: `You are an expert resume parsing AI. Your goal is to extract specific information from a resume based on the user's requirements.
-Respond STRICTLY in JSON format. Do not include any other text or explanation in your response. Ensure all extracted values are plain text, without markdown formatting. If a requested field is not found or not requested, omit it from the JSON output.
+  prompt: `You are an expert resume parsing AI. Your goal is to extract specific information from the provided resume document.
+Respond STRICTLY in JSON format. Do not include any other text or explanation. If a requested field is not found, omit it.
 
-Resume Text:
-"""
-{{{resumeContent}}}
-"""
+Resume Document:
+{{media url=fileDataUri}}
 
 Extraction Requirements:
 {{#if extractConfig.email}}- Extract the primary email address.

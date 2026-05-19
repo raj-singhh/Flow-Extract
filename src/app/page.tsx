@@ -36,12 +36,12 @@ export default function FlowExtract() {
 
     try {
       for (const file of files) {
-        // Read file content
-        const content = await readFileAsText(file);
+        // Read file as Data URI to send to the AI
+        const fileDataUri = await readFileAsDataUri(file);
         
-        // Execute GenAI Flow
+        // Execute GenAI Flow with the real file data
         const extraction = await extractResumeDetails({
-          resumeContent: content,
+          fileDataUri,
           extractConfig: config,
         });
         
@@ -74,7 +74,7 @@ export default function FlowExtract() {
     }
   };
 
-  const readFileAsText = (file: File): Promise<string> => {
+  const readFileAsDataUri = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -86,15 +86,7 @@ export default function FlowExtract() {
         reject(new Error(`Failed to read file: ${file.name}`));
       };
       
-      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      
-      if (isPDF) {
-        // Mocking PDF to Text for this prototype
-        // In a real app, you'd use a library like pdfjs-dist
-        resolve(`[PDF CONTENT MOCK: ${file.name}]\nExperience: Senior Software Engineer at Tech Corp (2020-2023). Skills: React, TypeScript, Next.js. Contact: dev@example.com, 555-999-0000. Education: Master of Science at MIT. Recent Role: Software Architect.`);
-      } else {
-        reader.readAsText(file);
-      }
+      reader.readAsDataURL(file);
     });
   };
 
