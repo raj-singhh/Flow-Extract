@@ -1,11 +1,13 @@
+
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon, ClipboardPaste } from "lucide-react";
+import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon, ClipboardPaste, MousePointer2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 interface ResumeDropZoneProps {
   onFilesDropped: (files: File[]) => void;
@@ -42,7 +44,10 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
     }
 
     if (files.length > 0) {
-      toast({ title: "Pasted Files Detected", description: `Processing ${files.length} pasted file(s)...` });
+      toast({ 
+        title: "Fast-Paste Detected", 
+        description: `Extracting data from ${files.length} clipboard file(s)...` 
+      });
       onFilesDropped(files);
     }
   }, [onFilesDropped, isProcessing, toast]);
@@ -66,12 +71,15 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
     e.preventDefault();
     setIsDragging(false);
     
+    // Check for Gmail attachment links
     const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-    if (url && url.includes('mail-attachment.googleusercontent.com') && e.dataTransfer.files.length === 0) {
+    const isGmailLink = url && (url.includes('mail.google.com') || url.includes('googleusercontent.com'));
+    
+    if (isGmailLink && e.dataTransfer.files.length === 0) {
       toast({
         variant: "destructive",
-        title: "Protected Link",
-        description: "Gmail protects attachments. Please use 'Ctrl+C' on the file and 'Ctrl+V' here, or download it first.",
+        title: "Gmail Drag Restriction",
+        description: "Google prevents direct dragging. Instead, Copy (Ctrl+C) the attachment in Gmail and Paste (Ctrl+V) here instantly!",
       });
       return;
     }
@@ -103,20 +111,39 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
 
   return (
     <div className="max-w-7xl mx-auto w-full px-6 mb-12 flex flex-col gap-4">
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+        <div className="flex items-center gap-2 text-xs font-headline font-bold text-primary uppercase tracking-tighter">
+          <Sparkles className="w-4 h-4" />
+          Quick Workflow:
+        </div>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Badge variant="outline" className="bg-background/80 flex items-center gap-1.5 py-1">
+            <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px]">Ctrl+C</kbd>
+            <span className="text-[10px]">Attachment in Gmail</span>
+          </Badge>
+          <Badge variant="outline" className="bg-background/80 flex items-center gap-1.5 py-1">
+            <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px]">Ctrl+V</kbd>
+            <span className="text-[10px]">Anywhere on this page</span>
+          </Badge>
+        </div>
+      </div>
+
       <div className="flex justify-center gap-4">
         <Button 
           variant={isPasteMode ? "outline" : "default"} 
           onClick={() => setIsPasteMode(false)}
-          className="rounded-full px-8"
+          className="rounded-full px-8 gap-2"
         >
-          Upload/Drop Files
+          <Upload className="w-4 h-4" />
+          Drop/Upload Files
         </Button>
         <Button 
           variant={isPasteMode ? "default" : "outline"} 
           onClick={() => setIsPasteMode(true)}
-          className="rounded-full px-8"
+          className="rounded-full px-8 gap-2"
         >
-          Paste Resume Text
+          <ClipboardPaste className="w-4 h-4" />
+          Paste Text
         </Button>
       </div>
 
@@ -131,47 +158,71 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
             isProcessing && "pointer-events-none opacity-80"
           )}
         >
-          <input type="file" multiple accept=".pdf,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => onFilesDropped(Array.from(e.target.files || []).filter(isValidFile))} disabled={isProcessing} />
+          <input 
+            type="file" 
+            multiple 
+            accept=".pdf,.txt,.png,.jpg,.jpeg,.webp" 
+            className="hidden" 
+            onChange={(e) => onFilesDropped(Array.from(e.target.files || []).filter(isValidFile))} 
+            disabled={isProcessing} 
+          />
           
           <div className="relative z-10 flex flex-col items-center gap-6">
             <div className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center transition-all",
-              isDragging ? "bg-primary text-white" : "bg-muted group-hover:bg-primary/20 text-muted-foreground group-hover:text-primary"
+              "w-24 h-24 rounded-3xl flex items-center justify-center transition-all shadow-2xl",
+              isDragging ? "bg-primary text-white rotate-6" : "bg-card border border-border group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary"
             )}>
-              {isProcessing ? <Loader2 className="w-10 h-10 animate-spin" /> : isDragging ? <Sparkles className="w-10 h-10" /> : <Upload className="w-10 h-10" />}
+              {isProcessing ? (
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+              ) : isDragging ? (
+                <MousePointer2 className="w-12 h-12" />
+              ) : (
+                <div className="relative">
+                   <Upload className="w-12 h-12" />
+                   <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full animate-bounce">
+                     Fast
+                   </div>
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-headline font-bold">
-                {isProcessing ? "Processing..." : isDragging ? "Release Files" : "Drop or Paste Files (Ctrl+V)"}
+            <div className="space-y-3">
+              <h3 className="text-3xl font-headline font-bold tracking-tight">
+                {isProcessing ? "Analyzing Resume..." : isDragging ? "Release to Extract" : "Drop or Ctrl+V Anywhere"}
               </h3>
-              <p className="text-muted-foreground max-w-sm mx-auto">
-                Drag resumes here, or simply **Paste (Ctrl+V)** after copying a file from your folder.
+              <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                Drag files here or just <span className="text-primary font-bold italic">Paste (Ctrl+V)</span> directly from Gmail to skip the download step.
               </p>
             </div>
           </div>
+
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-50 pointer-events-none" />
         </label>
       ) : (
-        <div className="bg-card/20 border-2 border-border rounded-3xl p-8 flex flex-col gap-4 min-h-[300px]">
+        <div className="bg-card/20 border-2 border-border rounded-3xl p-8 flex flex-col gap-4 min-h-[300px] animate-in slide-in-from-right-4 duration-300">
           <h3 className="text-xl font-headline font-bold flex items-center gap-2">
             <ClipboardPaste className="w-5 h-5 text-primary" />
-            Quick Paste Text
+            Direct Content Extraction
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Copy text directly from a resume in Gmail/Browser and paste it below.
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Copy the text body from an email or a website and paste it here for instant analysis.
           </p>
           <Textarea 
-            placeholder="Paste resume content here..." 
-            className="flex-1 min-h-[150px] bg-background/50 border-border focus:ring-primary"
+            placeholder="Paste raw resume content here..." 
+            className="flex-1 min-h-[180px] bg-background/50 border-border focus:ring-primary text-sm resize-none"
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
           />
           <Button 
-            className="w-full h-12 text-lg font-headline font-bold" 
+            className="w-full h-14 text-lg font-headline font-bold rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all" 
             disabled={!pastedText.trim() || isProcessing}
             onClick={handleProcessText}
           >
-            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            Extract Intelligence
+            {isProcessing ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <Sparkles className="mr-2 h-5 w-5" />
+            )}
+            Extract Candidate Intel
           </Button>
         </div>
       )}

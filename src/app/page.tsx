@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -44,10 +45,10 @@ export default function FlowExtract() {
       }
       if (results.length > 0) {
         setCandidates((prev) => [...results, ...prev]);
-        toast({ title: "Batch Processed", description: `Extracted ${results.length} candidate(s).` });
+        toast({ title: "Batch Processed", description: `Successfully extracted ${results.length} candidate(s).` });
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      toast({ variant: "destructive", title: "Extraction Failed", description: error.message });
     } finally {
       setIsProcessing(false);
     }
@@ -63,7 +64,7 @@ export default function FlowExtract() {
       });
       if (extraction) {
         setCandidates((prev) => [extraction, ...prev]);
-        toast({ title: "Text Processed", description: "Successfully extracted profile from pasted text." });
+        toast({ title: "Intelligence Extracted", description: "Profile successfully parsed from pasted content." });
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Extraction Failed", description: error.message });
@@ -90,11 +91,14 @@ export default function FlowExtract() {
       
       <div className="flex-1 flex flex-col">
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
-          <h2 className="text-4xl md:text-5xl font-headline font-bold mb-4 tracking-tight">
-            Seamless Data <span className="text-primary">Extraction</span>
+          <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
+            New: Gmail Paste Workflow Enabled
+          </div>
+          <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tight leading-none">
+            Smart Resume <span className="text-primary italic">Intelligence</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Drop files, paste files, or just paste text. Our AI handles the rest in one click.
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+            Drag files, paste text, or use <span className="text-foreground font-semibold">Ctrl+V</span> directly from Gmail attachments. No manual downloads needed.
           </p>
         </div>
 
@@ -105,8 +109,8 @@ export default function FlowExtract() {
         <CandidateTable candidates={candidates} config={config} isProcessing={isProcessing} />
       </div>
 
-      <footer className="py-8 border-t border-border/50 text-center text-xs text-muted-foreground font-headline tracking-widest uppercase mt-auto">
-        FlowExtract &copy; {new Date().getFullYear()} — Optimized Workflow
+      <footer className="py-8 border-t border-border/50 text-center text-[10px] text-muted-foreground font-headline tracking-[0.2em] uppercase mt-auto">
+        FlowExtract Intelligence &bull; Powered by Multi-Modal AI &bull; {new Date().getFullYear()}
       </footer>
 
       <Toaster />
