@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -46,9 +45,10 @@ export default function FlowExtract() {
       try {
         const fileDataUri = await readFileAsDataUri(file);
         
-        // Brief pause between requests to respect service limits during large batches
+        // Jittered pause between requests to respect service limits and avoid 503 bursts
         if (successCount > 0 || failCount > 0) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+          const delay = 600 + Math.random() * 400; 
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
 
         const extraction = await extractResumeDetails({
@@ -75,7 +75,7 @@ export default function FlowExtract() {
       toast({ 
         variant: "destructive", 
         title: "Extraction Failed", 
-        description: "The AI service is currently overloaded. Please try a smaller batch or wait a moment." 
+        description: "The AI service is currently overloaded (503). Please try a smaller batch or wait a moment." 
       });
     }
     
@@ -120,13 +120,13 @@ export default function FlowExtract() {
       <div className="flex-1 flex flex-col">
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
-            Optimized for recruitment batch extraction
+            High Precision Batch Extraction
           </div>
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tight leading-none">
             Smart Resume <span className="text-primary italic">Intelligence</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Drag files, paste text, or use <span className="text-foreground font-semibold">Ctrl+V</span> directly from Gmail attachments. Multi-modal AI handles PDFs and images instantly.
+            Drag files, paste text, or use <span className="text-foreground font-semibold">Ctrl+V</span> directly from attachments. Multi-modal AI handles PDFs and images instantly.
           </p>
         </div>
 

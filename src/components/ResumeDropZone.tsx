@@ -1,8 +1,7 @@
-
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon, ClipboardPaste, MousePointer2 } from "lucide-react";
+import { Upload, Loader2, Sparkles, ClipboardPaste, MousePointer2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -71,19 +70,6 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
     e.preventDefault();
     setIsDragging(false);
     
-    // Check for Gmail attachment links
-    const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-    const isGmailLink = url && (url.includes('mail.google.com') || url.includes('googleusercontent.com'));
-    
-    if (isGmailLink && e.dataTransfer.files.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Gmail Drag Restriction",
-        description: "Google prevents direct dragging. Instead, Copy (Ctrl+C) the attachment in Gmail and Paste (Ctrl+V) here instantly!",
-      });
-      return;
-    }
-
     const droppedFiles: File[] = [];
     if (e.dataTransfer.items) {
       for (let i = 0; i < e.dataTransfer.items.length; i++) {
@@ -100,7 +86,7 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
     if (droppedFiles.length > 0) {
       onFilesDropped(droppedFiles);
     }
-  }, [onFilesDropped, toast]);
+  }, [onFilesDropped]);
 
   const handleProcessText = () => {
     if (!pastedText.trim()) return;
@@ -119,11 +105,11 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
         <div className="flex flex-wrap justify-center gap-3">
           <Badge variant="outline" className="bg-background/80 flex items-center gap-1.5 py-1">
             <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px]">Ctrl+C</kbd>
-            <span className="text-[10px]">Attachment in Gmail</span>
+            <span className="text-[10px]">Attachment</span>
           </Badge>
           <Badge variant="outline" className="bg-background/80 flex items-center gap-1.5 py-1">
             <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px]">Ctrl+V</kbd>
-            <span className="text-[10px]">Anywhere on this page</span>
+            <span className="text-[10px]">Anywhere here</span>
           </Badge>
         </div>
       </div>
@@ -135,7 +121,7 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
           className="rounded-full px-8 gap-2"
         >
           <Upload className="w-4 h-4" />
-          Drop/Upload Files
+          Files
         </Button>
         <Button 
           variant={isPasteMode ? "default" : "outline"} 
@@ -180,22 +166,20 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
                 <div className="relative">
                    <Upload className="w-12 h-12" />
                    <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full animate-bounce">
-                     Fast
+                     Batch
                    </div>
                 </div>
               )}
             </div>
             <div className="space-y-3">
               <h3 className="text-3xl font-headline font-bold tracking-tight">
-                {isProcessing ? "Analyzing Resume..." : isDragging ? "Release to Extract" : "Drop or Ctrl+V Anywhere"}
+                {isProcessing ? "Analyzing..." : isDragging ? "Extracting" : "Drop or Ctrl+V"}
               </h3>
               <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                Drag files here or just <span className="text-primary font-bold italic">Paste (Ctrl+V)</span> directly from Gmail to skip the download step.
+                Copy an attachment from Gmail/Outlook and <span className="text-primary font-bold italic">Paste (Ctrl+V)</span> directly here.
               </p>
             </div>
           </div>
-
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-50 pointer-events-none" />
         </label>
       ) : (
         <div className="bg-card/20 border-2 border-border rounded-3xl p-8 flex flex-col gap-4 min-h-[300px] animate-in slide-in-from-right-4 duration-300">
@@ -203,9 +187,6 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
             <ClipboardPaste className="w-5 h-5 text-primary" />
             Direct Content Extraction
           </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Copy the text body from an email or a website and paste it here for instant analysis.
-          </p>
           <Textarea 
             placeholder="Paste raw resume content here..." 
             className="flex-1 min-h-[180px] bg-background/50 border-border focus:ring-primary text-sm resize-none"

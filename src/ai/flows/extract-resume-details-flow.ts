@@ -30,11 +30,11 @@ const ExtractResumeDetailsOutputSchema = z.object({
   email: z.string().optional().describe('The extracted primary email address.'),
   phone: z.string().optional().describe('The extracted primary phone number.'),
   skills: z.array(z.string()).optional().describe('A comprehensive list of technical and soft skills.'),
-  experience: z.array(z.string()).optional().describe('Summarized work experience including role and duration.'),
+  experience: z.array(z.string()).optional().describe('Summarized work experience including role, company, and duration.'),
   companies: z.array(z.string()).optional().describe('List of companies worked for.'),
-  college: z.string().optional().describe('Full name of the college/university and percentage/GPA if found (e.g., University of Tech - 85%).'),
-  suggestedProfiles: z.array(z.string()).optional().describe('Most suitable job profiles based on deep analysis.'),
-  totalExperience: z.string().optional().describe('Calculated total years of experience (e.g. 5.5 years).'),
+  college: z.string().optional().describe('Full name of the college/university and percentage/GPA if found (e.g., University of Tech - 85% or 3.8 GPA).'),
+  suggestedProfiles: z.array(z.string()).optional().describe('Most suitable job profiles based on deep analysis of skills and experience.'),
+  totalExperience: z.string().optional().describe('Calculated total years of professional experience (e.g. 5.5 years).'),
 });
 export type ExtractResumeDetailsOutput = z.infer<typeof ExtractResumeDetailsOutputSchema>;
 
@@ -46,8 +46,8 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   name: 'extractResumeDetailsPrompt',
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
-  prompt: `You are an expert recruitment AI. Extract and analyze candidate information with high precision.
-Respond STRICTLY in JSON format.
+  prompt: `You are an expert recruitment AI. Extract and analyze candidate information with extreme precision. 
+If specific details like percentage, GPA, or exact duration of work are missing but implied, do your best to calculate or summarize them accurately.
 
 Source Data:
 {{#if text}}
@@ -62,11 +62,11 @@ FILE CONTENT:
 Extraction Requirements:
 {{#if extractConfig.email}}- Extract primary email.
 {{/if}}{{#if extractConfig.phone}}- Extract primary phone.
-{{/if}}{{#if extractConfig.skills}}- Identify all relevant technical skills and soft skills.
-{{/if}}{{#if extractConfig.experience}}- Summarize key roles with company names and time periods.
-{{/if}}{{#if extractConfig.college}}- Find the full college name and any mentioned CGPA/Percentage/GPA.
-{{/if}}{{#if extractConfig.suggestedProfiles}}- Suggest specific job titles or roles the candidate is highly qualified for.
-{{/if}}{{#if extractConfig.totalExperience}}- Calculate the total duration of the professional career in years (e.g., "4 years 2 months" or "8 years").
+{{/if}}{{#if extractConfig.skills}}- Identify all relevant technical skills, tools, and soft skills mentioned.
+{{/if}}{{#if extractConfig.experience}}- Summarize work history. For each role, include: Company Name, Job Title, and Duration (e.g. "Google - Software Engineer, 3 years").
+{{/if}}{{#if extractConfig.college}}- Identify the college/university name. Crucially, look for and include academic performance metrics like Percentage, CGPA, or GPA if they appear.
+{{/if}}{{#if extractConfig.suggestedProfiles}}- Analyze the entire career trajectory and skill set to suggest specific professional profiles the candidate is most qualified for (e.g., "Fullstack Engineer", "Product Manager").
+{{/if}}{{#if extractConfig.totalExperience}}- Sum up all professional experiences to provide a total YOE string (e.g., "4 years 2 months").
 {{/if}}`,
 });
 

@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ExtractionConfig } from "./ExtractionConfigBar";
 import { ExtractResumeDetailsOutput } from "@/ai/flows/extract-resume-details-flow";
-import { User, Mail, Phone, Briefcase, Building2, GraduationCap, LayoutGrid, SearchX, Loader2, Timer } from "lucide-react";
+import { User, Mail, Phone, Briefcase, Building2, GraduationCap, SearchX, Loader2, Timer } from "lucide-react";
 
 interface CandidateTableProps {
   candidates: ExtractResumeDetailsOutput[];
@@ -55,10 +55,10 @@ export function CandidateTable({ candidates, config, isProcessing }: CandidateTa
             <TableRow className="hover:bg-transparent border-border">
               {config.email && <TableHead className="font-headline font-bold text-foreground">Contact</TableHead>}
               {config.totalExperience && <TableHead className="font-headline font-bold text-foreground text-center">YOE</TableHead>}
-              {config.college && <TableHead className="font-headline font-bold text-foreground">Education & Stats</TableHead>}
-              {config.suggestedProfiles && <TableHead className="font-headline font-bold text-foreground">Fit Roles</TableHead>}
-              {config.skills && <TableHead className="font-headline font-bold text-foreground">Expertise</TableHead>}
-              {config.experience && <TableHead className="font-headline font-bold text-foreground">Work History</TableHead>}
+              {config.college && <TableHead className="font-headline font-bold text-foreground">Education (Score)</TableHead>}
+              {config.suggestedProfiles && <TableHead className="font-headline font-bold text-foreground">Ideal Profiles</TableHead>}
+              {config.skills && <TableHead className="font-headline font-bold text-foreground">Key Expertise</TableHead>}
+              {config.experience && <TableHead className="font-headline font-bold text-foreground">Detailed History</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -89,7 +89,7 @@ export function CandidateTable({ candidates, config, isProcessing }: CandidateTa
                    <TableCell className="py-5 text-center">
                      <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-lg border border-primary/20 font-headline font-bold text-[11px]">
                        <Timer className="w-3.5 h-3.5" />
-                       {candidate.totalExperience || "New Grad"}
+                       {candidate.totalExperience || "N/A"}
                      </div>
                    </TableCell>
                 )}
@@ -115,7 +115,7 @@ export function CandidateTable({ candidates, config, isProcessing }: CandidateTa
                 {config.skills && (
                   <TableCell className="py-5">
                     <div className="flex flex-wrap gap-1.5 max-w-[180px]">
-                      {candidate.skills?.slice(0, 8).map((skill, i) => (
+                      {candidate.skills?.slice(0, 10).map((skill, i) => (
                         <Badge key={i} variant="secondary" className="text-[10px] py-0 px-1.5 h-5 bg-secondary/50 border-transparent text-muted-foreground group-hover:text-foreground group-hover:border-primary/30 transition-all">
                           {skill}
                         </Badge>
@@ -126,7 +126,7 @@ export function CandidateTable({ candidates, config, isProcessing }: CandidateTa
                 {config.experience && (
                   <TableCell className="py-5">
                     <div className="flex flex-col gap-2 max-w-[250px]">
-                      {candidate.experience?.slice(0, 2).map((exp, i) => (
+                      {candidate.experience?.slice(0, 3).map((exp, i) => (
                         <div key={i} className="flex items-start gap-2">
                           <Briefcase className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                           <span className="text-[10px] text-muted-foreground line-clamp-2 leading-tight">{exp}</span>
@@ -134,7 +134,7 @@ export function CandidateTable({ candidates, config, isProcessing }: CandidateTa
                       )) || (
                         <div className="flex items-start gap-2">
                           <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                          <span className="text-[10px] text-muted-foreground italic">No detailed history found</span>
+                          <span className="text-[10px] text-muted-foreground italic">No detailed history</span>
                         </div>
                       )}
                     </div>
