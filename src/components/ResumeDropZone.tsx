@@ -1,32 +1,56 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon, ClipboardPaste } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ResumeDropZoneProps {
   onFilesDropped: (files: File[]) => void;
+  onTextPasted: (text: string) => void;
   isProcessing: boolean;
 }
 
-export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneProps) {
+export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: ResumeDropZoneProps) {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
+  const [isPasteMode, setIsPasteMode] = useState(false);
+  const [pastedText, setPastedText] = useState("");
 
   const isValidFile = (file: File) => {
     const extension = file.name?.split('.').pop()?.toLowerCase() || '';
     const validExtensions = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'webp'];
-    const validMimeTypes = [
-      "text/plain",
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "application/octet-stream"
-    ];
-    return validExtensions.includes(extension) || validMimeTypes.includes(file.type);
+    return validExtensions.includes(extension) || file.type.startsWith('image/') || file.type === 'application/pdf' || file.type === 'text/plain';
   };
+
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    if (isProcessing) return;
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file') {
+        const file = items[i].getAsFile();
+        if (file && isValidFile(file)) {
+          files.push(file);
+        }
+      }
+    }
+
+    if (files.length > 0) {
+      toast({ title: "Pasted Files Detected", description: `Processing ${files.length} pasted file(s)...` });
+      onFilesDropped(files);
+    }
+  }, [onFilesDropped, isProcessing, toast]);
+
+  useEffect(() => {
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [handlePaste]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -42,122 +66,115 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
     e.preventDefault();
     setIsDragging(false);
     
-    // Check if the user dropped a URL (like a Gmail attachment chip) instead of a file
     const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
     if (url && url.includes('mail-attachment.googleusercontent.com') && e.dataTransfer.files.length === 0) {
       toast({
         variant: "destructive",
-        title: "Attachment Link Detected",
-        description: "Please download the attachment to your computer first, then drag the file here.",
+        title: "Protected Link",
+        description: "Gmail protects attachments. Please use 'Ctrl+C' on the file and 'Ctrl+V' here, or download it first.",
       });
       return;
     }
 
     const droppedFiles: File[] = [];
-    
-    // More robust file extraction from items
     if (e.dataTransfer.items) {
       for (let i = 0; i < e.dataTransfer.items.length; i++) {
         if (e.dataTransfer.items[i].kind === 'file') {
           const file = e.dataTransfer.items[i].getAsFile();
-          if (file && isValidFile(file)) {
-            droppedFiles.push(file);
-          }
+          if (file && isValidFile(file)) droppedFiles.push(file);
         }
       }
     } else {
-      // Fallback
       const files = Array.from(e.dataTransfer.files).filter(isValidFile);
       droppedFiles.push(...files);
     }
 
     if (droppedFiles.length > 0) {
       onFilesDropped(droppedFiles);
-    } else if (e.dataTransfer.files.length > 0 || e.dataTransfer.items.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Unsupported File",
-        description: "Please drop PDF, Image, or Text resumes only.",
-      });
     }
   }, [onFilesDropped, toast]);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []).filter(isValidFile);
-    
-    if (files.length > 0) {
-      onFilesDropped(files);
-    }
+  const handleProcessText = () => {
+    if (!pastedText.trim()) return;
+    onTextPasted(pastedText);
+    setPastedText("");
+    setIsPasteMode(false);
   };
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-6 mb-12">
-      <label
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={cn(
-          "relative group overflow-hidden border-2 border-dashed rounded-3xl p-12 transition-all duration-500 ease-out flex flex-col items-center justify-center text-center cursor-pointer",
-          isDragging
-            ? "border-primary bg-primary/5 scale-[1.01] shadow-2xl shadow-primary/10"
-            : "border-border bg-card/10 hover:border-primary/50 hover:bg-primary/[0.02]",
-          isProcessing && "pointer-events-none opacity-80"
-        )}
-      >
-        <input 
-          type="file" 
-          multiple 
-          accept=".pdf,.txt,.png,.jpg,.jpeg,.webp" 
-          className="hidden" 
-          onChange={handleFileInput}
-          disabled={isProcessing}
-        />
-        
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-0 left-0 w-32 h-32 bg-primary blur-3xl -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary blur-3xl translate-x-1/2 translate-y-1/2" />
-        </div>
+    <div className="max-w-7xl mx-auto w-full px-6 mb-12 flex flex-col gap-4">
+      <div className="flex justify-center gap-4">
+        <Button 
+          variant={isPasteMode ? "outline" : "default"} 
+          onClick={() => setIsPasteMode(false)}
+          className="rounded-full px-8"
+        >
+          Upload/Drop Files
+        </Button>
+        <Button 
+          variant={isPasteMode ? "default" : "outline"} 
+          onClick={() => setIsPasteMode(true)}
+          className="rounded-full px-8"
+        >
+          Paste Resume Text
+        </Button>
+      </div>
 
-        <div className="relative z-10 flex flex-col items-center gap-6">
-          <div className={cn(
-            "w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-500",
-            isDragging ? "bg-primary scale-110 rotate-6" : "bg-muted group-hover:bg-primary/20",
-            isProcessing && "animate-pulse"
-          )}>
-            {isProcessing ? (
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            ) : isDragging ? (
-              <Sparkles className="w-10 h-10 text-white" />
-            ) : (
-              <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-2xl font-headline font-bold">
-              {isProcessing ? "Extracting Intelligence..." : isDragging ? "Release to Extract" : "Drop Resumes Here"}
-            </h3>
-            <p className="text-muted-foreground max-w-sm mx-auto">
-              Drag and drop multiple PDF, Images, or Text resumes, or click to browse.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-background border rounded-lg text-xs font-medium text-muted-foreground group-hover:border-primary/30 transition-all">
-              <FileText className="w-3.5 h-3.5" />
-              <span>PDF / TXT</span>
+      {!isPasteMode ? (
+        <label
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            "relative group overflow-hidden border-2 border-dashed rounded-3xl p-12 transition-all duration-500 ease-out flex flex-col items-center justify-center text-center cursor-pointer min-h-[300px]",
+            isDragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border bg-card/10 hover:border-primary/50",
+            isProcessing && "pointer-events-none opacity-80"
+          )}
+        >
+          <input type="file" multiple accept=".pdf,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => onFilesDropped(Array.from(e.target.files || []).filter(isValidFile))} disabled={isProcessing} />
+          
+          <div className="relative z-10 flex flex-col items-center gap-6">
+            <div className={cn(
+              "w-20 h-20 rounded-2xl flex items-center justify-center transition-all",
+              isDragging ? "bg-primary text-white" : "bg-muted group-hover:bg-primary/20 text-muted-foreground group-hover:text-primary"
+            )}>
+              {isProcessing ? <Loader2 className="w-10 h-10 animate-spin" /> : isDragging ? <Sparkles className="w-10 h-10" /> : <Upload className="w-10 h-10" />}
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-background border rounded-lg text-xs font-medium text-muted-foreground group-hover:border-primary/30 transition-all">
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>Images (JPG/PNG)</span>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-headline font-bold">
+                {isProcessing ? "Processing..." : isDragging ? "Release Files" : "Drop or Paste Files (Ctrl+V)"}
+              </h3>
+              <p className="text-muted-foreground max-w-sm mx-auto">
+                Drag resumes here, or simply **Paste (Ctrl+V)** after copying a file from your folder.
+              </p>
             </div>
           </div>
+        </label>
+      ) : (
+        <div className="bg-card/20 border-2 border-border rounded-3xl p-8 flex flex-col gap-4 min-h-[300px]">
+          <h3 className="text-xl font-headline font-bold flex items-center gap-2">
+            <ClipboardPaste className="w-5 h-5 text-primary" />
+            Quick Paste Text
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Copy text directly from a resume in Gmail/Browser and paste it below.
+          </p>
+          <Textarea 
+            placeholder="Paste resume content here..." 
+            className="flex-1 min-h-[150px] bg-background/50 border-border focus:ring-primary"
+            value={pastedText}
+            onChange={(e) => setPastedText(e.target.value)}
+          />
+          <Button 
+            className="w-full h-12 text-lg font-headline font-bold" 
+            disabled={!pastedText.trim() || isProcessing}
+            onClick={handleProcessText}
+          >
+            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            Extract Intelligence
+          </Button>
         </div>
-
-        {isDragging && (
-          <div className="absolute inset-0 border-4 border-primary/20 rounded-3xl animate-pulse" />
-        )}
-      </label>
+      )}
     </div>
   );
 }
