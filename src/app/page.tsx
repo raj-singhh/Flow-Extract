@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -38,25 +39,47 @@ export default function FlowExtract() {
     if (files.length === 0) return;
     setIsProcessing(true);
     
-    try {
-      const results: ExtractResumeDetailsOutput[] = [];
-      for (const file of files) {
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const file of files) {
+      try {
         const fileDataUri = await readFileAsDataUri(file);
+        
+        // Brief pause between requests to respect service limits during large batches
+        if (successCount > 0 || failCount > 0) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
         const extraction = await extractResumeDetails({
           fileDataUri,
           extractConfig: config,
         });
-        if (extraction) results.push(extraction);
+
+        if (extraction) {
+          setCandidates((prev) => [extraction, ...prev]);
+          successCount++;
+        }
+      } catch (error: any) {
+        console.error(`Failed to process ${file.name}:`, error);
+        failCount++;
       }
-      if (results.length > 0) {
-        setCandidates((prev) => [...results, ...prev]);
-        toast({ title: "Batch Processed", description: `Successfully extracted ${results.length} candidate(s).` });
-      }
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Extraction Failed", description: error.message });
-    } finally {
-      setIsProcessing(false);
     }
+
+    if (successCount > 0) {
+      toast({ 
+        title: "Batch Complete", 
+        description: `Successfully extracted ${successCount} profile(s).${failCount > 0 ? ` ${failCount} failed due to service demand.` : ''}` 
+      });
+    } else if (failCount > 0) {
+      toast({ 
+        variant: "destructive", 
+        title: "Extraction Failed", 
+        description: "The AI service is currently overloaded. Please try a smaller batch or wait a moment." 
+      });
+    }
+    
+    setIsProcessing(false);
   };
 
   const processText = async (text: string) => {
