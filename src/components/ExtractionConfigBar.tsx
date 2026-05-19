@@ -7,6 +7,8 @@ export type ExtractionConfig = {
   skills: boolean;
   experience: boolean;
   companies: boolean;
+  college: boolean;
+  suggestedProfiles: boolean;
 };
 
 interface ExtractionConfigBarProps {
@@ -15,6 +17,12 @@ interface ExtractionConfigBarProps {
 }
 
 export function ExtractionConfigBar({ config, onChange }: ExtractionConfigBarProps) {
+  const formatLabel = (key: string) => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase());
+  };
+
   return (
     <div className="w-full bg-card/50 border-b p-4 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -32,11 +40,11 @@ export function ExtractionConfigBar({ config, onChange }: ExtractionConfigBarPro
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
           </div>
-          <h1 className="text-xl font-headline font-bold tracking-tight">FlowExtract</h1>
+          <h1 className="text-xl font-headline font-bold tracking-tight text-foreground">FlowExtract</h1>
         </div>
         
-        <div className="flex flex-wrap items-center gap-6">
-          <span className="text-sm font-medium text-muted-foreground uppercase tracking-widest font-headline">Fields to Extract:</span>
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest font-headline">Fields to Extract:</span>
           {(Object.keys(config) as Array<keyof ExtractionConfig>).map((key) => (
             <div key={key} className="flex items-center space-x-2 bg-background/50 px-3 py-1.5 rounded-full border border-border hover:border-primary/50 transition-colors cursor-pointer group">
               <Checkbox
@@ -47,9 +55,9 @@ export function ExtractionConfigBar({ config, onChange }: ExtractionConfigBarPro
               />
               <Label
                 htmlFor={key}
-                className="text-sm font-medium capitalize cursor-pointer group-hover:text-primary transition-colors font-headline"
+                className="text-xs font-medium cursor-pointer group-hover:text-primary transition-colors font-headline"
               >
-                {key}
+                {formatLabel(key)}
               </Label>
             </div>
           ))}

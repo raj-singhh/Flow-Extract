@@ -17,6 +17,8 @@ export default function FlowExtract() {
     skills: true,
     experience: true,
     companies: true,
+    college: true,
+    suggestedProfiles: true,
   });
   
   const [candidates, setCandidates] = useState<ExtractResumeDetailsOutput[]>([]);
@@ -67,12 +69,9 @@ export default function FlowExtract() {
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
       
-      // Simple text reading for now
-      // In a production app, we would use a PDF parsing library on the client or server
       if (file.type === "application/pdf") {
         // Mocking PDF to Text for this prototype
-        // Real-world: Use library like pdfjs-dist or a cloud function
-        resolve(`[PDF CONTENT MOCK: ${file.name}]\nExperience: Senior Software Engineer at Tech Corp (2020-2023). Skills: React, TypeScript, Next.js. Contact: john.doe@example.com, 555-123-4567.`);
+        resolve(`[PDF CONTENT MOCK: ${file.name}]\nExperience: Senior Software Engineer at Tech Corp (2020-2023). Skills: React, TypeScript, Next.js. Contact: john.doe@example.com, 555-123-4567. Education: Bachelor of Science at Stanford University.`);
       } else {
         reader.readAsText(file);
       }

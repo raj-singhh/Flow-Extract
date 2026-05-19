@@ -18,6 +18,8 @@ const ExtractResumeDetailsInputSchema = z.object({
     skills: z.boolean().optional().describe('Whether to extract a concise list of key skills.'),
     experience: z.boolean().optional().describe('Whether to extract a summary of work experience entries.'),
     companies: z.boolean().optional().describe('Whether to extract a list of companies the candidate has worked for.'),
+    college: z.boolean().optional().describe('Whether to extract the name of the college or university.'),
+    suggestedProfiles: z.boolean().optional().describe('Whether to suggest suitable job profiles based on skills and experience.'),
   }).describe('Configuration for specifying which information fields to extract from the resume.'),
 });
 export type ExtractResumeDetailsInput = z.infer<typeof ExtractResumeDetailsInputSchema>;
@@ -26,8 +28,10 @@ const ExtractResumeDetailsOutputSchema = z.object({
   email: z.string().optional().describe('The extracted primary email address.'),
   phone: z.string().optional().describe('The extracted primary phone number.'),
   skills: z.array(z.string()).optional().describe('A list of key technical and soft skills found in the resume.'),
-  experience: z.array(z.string()).optional().describe('A list of summarized work experience entries (e.g., "Software Engineer at Google, 2018-2023").'),
+  experience: z.array(z.string()).optional().describe('A list of summarized work experience entries.'),
   companies: z.array(z.string()).optional().describe('A list of companies the candidate has worked for.'),
+  college: z.string().optional().describe('The name of the college or university attended.'),
+  suggestedProfiles: z.array(z.string()).optional().describe('A list of all possible job profiles the candidate is suited for.'),
 });
 export type ExtractResumeDetailsOutput = z.infer<typeof ExtractResumeDetailsOutputSchema>;
 
@@ -40,7 +44,7 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
   prompt: `You are an expert resume parsing AI. Your goal is to extract specific information from a resume based on the user's requirements.
-Respond STRICTLY in JSON format. Do not include any other text or explanation in your response. Ensure all extracted values are plain text, without markdown formatting like bullet points within string values. If a requested field is not found or not requested, omit it from the JSON output.
+Respond STRICTLY in JSON format. Do not include any other text or explanation in your response. Ensure all extracted values are plain text, without markdown formatting. If a requested field is not found or not requested, omit it from the JSON output.
 
 Resume Text:
 """
@@ -53,6 +57,8 @@ Extraction Requirements:
 {{/if}}{{#if extractConfig.skills}}- Extract a concise list of key technical and soft skills as an array of strings.
 {{/if}}{{#if extractConfig.experience}}- Extract a summary of work experience. For each entry, provide a concise string summarizing the job title, company, and dates. Return these as an array of strings.
 {{/if}}{{#if extractConfig.companies}}- Extract a list of companies the candidate has worked for as an array of strings.
+{{/if}}{{#if extractConfig.college}}- Extract the name of the college or university the candidate attended.
+{{/if}}{{#if extractConfig.suggestedProfiles}}- Based on the candidate's skills and experience, list all possible job profiles (e.g., "Full Stack Developer", "Project Manager", "DevOps Engineer") they would be suited for as an array of strings.
 {{/if}}`,
 });
 

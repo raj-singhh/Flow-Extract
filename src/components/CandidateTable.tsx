@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ExtractionConfig } from "./ExtractionConfigBar";
 import { ExtractResumeDetailsOutput } from "@/ai/flows/extract-resume-details-flow";
-import { User, Mail, Phone, Code, Briefcase, Building2 } from "lucide-react";
+import { User, Mail, Phone, Briefcase, Building2, GraduationCap, LayoutGrid } from "lucide-react";
 
 interface CandidateTableProps {
   candidates: ExtractResumeDetailsOutput[];
@@ -39,6 +39,8 @@ export function CandidateTable({ candidates, config }: CandidateTableProps) {
             <TableRow className="hover:bg-transparent border-border">
               {config.email && <TableHead className="font-headline font-bold text-foreground">Email</TableHead>}
               {config.phone && <TableHead className="font-headline font-bold text-foreground">Phone</TableHead>}
+              {config.college && <TableHead className="font-headline font-bold text-foreground">College</TableHead>}
+              {config.suggestedProfiles && <TableHead className="font-headline font-bold text-foreground">Suggested Profiles</TableHead>}
               {config.skills && <TableHead className="font-headline font-bold text-foreground">Top Skills</TableHead>}
               {config.experience && <TableHead className="font-headline font-bold text-foreground">Latest Exp</TableHead>}
               {config.companies && <TableHead className="font-headline font-bold text-foreground">Companies</TableHead>}
@@ -51,7 +53,7 @@ export function CandidateTable({ candidates, config }: CandidateTableProps) {
                   <TableCell className="py-4">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="font-medium text-foreground">{candidate.email || "—"}</span>
+                      <span className="font-medium text-foreground text-xs">{candidate.email || "—"}</span>
                     </div>
                   </TableCell>
                 )}
@@ -59,37 +61,54 @@ export function CandidateTable({ candidates, config }: CandidateTableProps) {
                   <TableCell className="py-4">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-muted-foreground group-hover:text-foreground">{candidate.phone || "—"}</span>
+                      <span className="text-muted-foreground group-hover:text-foreground text-xs">{candidate.phone || "—"}</span>
+                    </div>
+                  </TableCell>
+                )}
+                {config.college && (
+                  <TableCell className="py-4">
+                    <div className="flex items-center gap-2 max-w-[150px]">
+                      <GraduationCap className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      <span className="text-muted-foreground group-hover:text-foreground text-xs line-clamp-2">{candidate.college || "—"}</span>
+                    </div>
+                  </TableCell>
+                )}
+                {config.suggestedProfiles && (
+                  <TableCell className="py-4">
+                    <div className="flex flex-wrap gap-1 max-w-[180px]">
+                      {candidate.suggestedProfiles?.map((profile, i) => (
+                        <div key={i} className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                          <LayoutGrid className="w-3 h-3" />
+                          {profile}
+                        </div>
+                      )) || "—"}
                     </div>
                   </TableCell>
                 )}
                 {config.skills && (
                   <TableCell className="py-4">
-                    <div className="flex flex-wrap gap-1.5 max-w-xs">
+                    <div className="flex flex-wrap gap-1.5 max-w-[150px]">
                       {candidate.skills?.slice(0, 4).map((skill, i) => (
                         <Badge key={i} variant="secondary" className="text-[10px] py-0 bg-secondary/50 hover:bg-primary/20 hover:text-primary transition-all">
                           {skill}
                         </Badge>
                       )) || "—"}
-                      {(candidate.skills?.length || 0) > 4 && (
-                        <span className="text-[10px] text-muted-foreground">+{candidate.skills!.length - 4} more</span>
-                      )}
                     </div>
                   </TableCell>
                 )}
                 {config.experience && (
                   <TableCell className="py-4">
-                    <div className="flex items-start gap-2 max-w-xs">
+                    <div className="flex items-start gap-2 max-w-[180px]">
                       <Briefcase className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
-                      <span className="text-xs text-muted-foreground line-clamp-2">{candidate.experience?.[0] || "—"}</span>
+                      <span className="text-[11px] text-muted-foreground line-clamp-2">{candidate.experience?.[0] || "—"}</span>
                     </div>
                   </TableCell>
                 )}
                 {config.companies && (
                   <TableCell className="py-4">
-                    <div className="flex flex-wrap gap-1 max-w-xs">
-                      {candidate.companies?.slice(0, 3).map((co, i) => (
-                        <div key={i} className="flex items-center gap-1 text-[11px] text-muted-foreground bg-background px-2 py-0.5 rounded border border-border">
+                    <div className="flex flex-wrap gap-1 max-w-[120px]">
+                      {candidate.companies?.slice(0, 2).map((co, i) => (
+                        <div key={i} className="flex items-center gap-1 text-[10px] text-muted-foreground bg-background px-2 py-0.5 rounded border border-border">
                           <Building2 className="w-3 h-3" />
                           {co}
                         </div>
