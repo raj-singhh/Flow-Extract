@@ -14,13 +14,14 @@ const ExtractResumeDetailsInputSchema = z.object({
   fileDataUri: z.string().optional().describe("The resume file as a data URI (PDF, Image, or Text)."),
   text: z.string().optional().describe("Raw text content of a resume if pasted directly."),
   extractConfig: z.object({
-    email: z.boolean().optional().describe('Whether to extract the primary email address.'),
-    phone: z.boolean().optional().describe('Whether to extract the primary phone number.'),
-    skills: z.boolean().optional().describe('Whether to extract a concise list of key skills.'),
-    experience: z.boolean().optional().describe('Whether to extract a summary of work experience entries.'),
-    companies: z.boolean().optional().describe('Whether to extract a list of companies the candidate has worked for.'),
-    college: z.boolean().optional().describe('Whether to extract the name of the college or university.'),
-    suggestedProfiles: z.boolean().optional().describe('Whether to suggest suitable job profiles based on skills and experience.'),
+    email: z.boolean().optional(),
+    phone: z.boolean().optional(),
+    skills: z.boolean().optional(),
+    experience: z.boolean().optional(),
+    companies: z.boolean().optional(),
+    college: z.boolean().optional(),
+    suggestedProfiles: z.boolean().optional(),
+    totalExperience: z.boolean().optional().describe('Whether to calculate total years of experience.'),
   }).describe('Configuration for specifying which information fields to extract.'),
 });
 export type ExtractResumeDetailsInput = z.infer<typeof ExtractResumeDetailsInputSchema>;
@@ -28,11 +29,12 @@ export type ExtractResumeDetailsInput = z.infer<typeof ExtractResumeDetailsInput
 const ExtractResumeDetailsOutputSchema = z.object({
   email: z.string().optional().describe('The extracted primary email address.'),
   phone: z.string().optional().describe('The extracted primary phone number.'),
-  skills: z.array(z.string()).optional().describe('A list of key technical and soft skills.'),
-  experience: z.array(z.string()).optional().describe('A list of summarized work experience entries.'),
-  companies: z.array(z.string()).optional().describe('A list of companies.'),
-  college: z.string().optional().describe('The name of the college or university.'),
-  suggestedProfiles: z.array(z.string()).optional().describe('Suitability profiles.'),
+  skills: z.array(z.string()).optional().describe('A comprehensive list of technical and soft skills.'),
+  experience: z.array(z.string()).optional().describe('Summarized work experience including role and duration.'),
+  companies: z.array(z.string()).optional().describe('List of companies worked for.'),
+  college: z.string().optional().describe('Full name of the college/university and percentage/GPA if found (e.g., University of Tech - 85%).'),
+  suggestedProfiles: z.array(z.string()).optional().describe('Most suitable job profiles based on deep analysis.'),
+  totalExperience: z.string().optional().describe('Calculated total years of experience (e.g. 5.5 years).'),
 });
 export type ExtractResumeDetailsOutput = z.infer<typeof ExtractResumeDetailsOutputSchema>;
 
@@ -44,7 +46,7 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   name: 'extractResumeDetailsPrompt',
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
-  prompt: `You are an expert resume parsing AI. Extract specific information from the provided resume source.
+  prompt: `You are an expert recruitment AI. Extract and analyze candidate information with high precision.
 Respond STRICTLY in JSON format.
 
 Source Data:
@@ -58,13 +60,13 @@ FILE CONTENT:
 {{/if}}
 
 Extraction Requirements:
-{{#if extractConfig.email}}- Extract the primary email address.
-{{/if}}{{#if extractConfig.phone}}- Extract the primary phone number.
-{{/if}}{{#if extractConfig.skills}}- Extract key skills as an array of strings.
-{{/if}}{{#if extractConfig.experience}}- Extract work experience summary as an array of strings.
-{{/if}}{{#if extractConfig.companies}}- Extract company history as an array of strings.
-{{/if}}{{#if extractConfig.college}}- Extract college/university name.
-{{/if}}{{#if extractConfig.suggestedProfiles}}- List all possible job profiles the candidate is suited for as an array of strings.
+{{#if extractConfig.email}}- Extract primary email.
+{{/if}}{{#if extractConfig.phone}}- Extract primary phone.
+{{/if}}{{#if extractConfig.skills}}- Identify all relevant technical skills and soft skills.
+{{/if}}{{#if extractConfig.experience}}- Summarize key roles with company names and time periods.
+{{/if}}{{#if extractConfig.college}}- Find the full college name and any mentioned CGPA/Percentage/GPA.
+{{/if}}{{#if extractConfig.suggestedProfiles}}- Suggest specific job titles or roles the candidate is highly qualified for.
+{{/if}}{{#if extractConfig.totalExperience}}- Calculate the total duration of the professional career in years (e.g., "4 years 2 months" or "8 years").
 {{/if}}`,
 });
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -20,6 +19,7 @@ export default function FlowExtract() {
     companies: true,
     college: true,
     suggestedProfiles: true,
+    totalExperience: true,
   });
   
   const [candidates, setCandidates] = useState<ExtractResumeDetailsOutput[]>([]);
@@ -27,6 +27,11 @@ export default function FlowExtract() {
 
   const handleConfigChange = (key: keyof ExtractionConfig, value: boolean) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleReset = () => {
+    setCandidates([]);
+    toast({ title: "Workspace Reset", description: "All extracted candidate data has been cleared." });
   };
 
   const processFiles = async (files: File[]) => {
@@ -87,18 +92,18 @@ export default function FlowExtract() {
 
   return (
     <main className="min-h-screen flex flex-col bg-background text-foreground font-body overflow-x-hidden pb-20">
-      <ExtractionConfigBar config={config} onChange={handleConfigChange} />
+      <ExtractionConfigBar config={config} onChange={handleConfigChange} onReset={handleReset} />
       
       <div className="flex-1 flex flex-col">
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
-            New: Gmail Paste Workflow Enabled
+            Optimized for recruitment batch extraction
           </div>
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tight leading-none">
             Smart Resume <span className="text-primary italic">Intelligence</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Drag files, paste text, or use <span className="text-foreground font-semibold">Ctrl+V</span> directly from Gmail attachments. No manual downloads needed.
+            Drag files, paste text, or use <span className="text-foreground font-semibold">Ctrl+V</span> directly from Gmail attachments. Multi-modal AI handles PDFs and images instantly.
           </p>
         </div>
 
