@@ -31,7 +31,7 @@ export default function FlowExtract() {
 
   const handleReset = () => {
     setCandidates([]);
-    toast({ title: "Workspace Reset", description: "All extracted candidate data has been cleared." });
+    toast({ title: "Workspace Reset", description: "All extracted data has been cleared." });
   };
 
   const processFiles = async (files: File[]) => {
@@ -45,10 +45,9 @@ export default function FlowExtract() {
       try {
         const fileDataUri = await readFileAsDataUri(file);
         
-        // Jittered pause between requests to respect service limits and avoid 503 bursts
+        // Add a 1.2s delay between items to respect rate limits during batch
         if (successCount > 0 || failCount > 0) {
-          const delay = 600 + Math.random() * 400; 
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise(resolve => setTimeout(resolve, 1200));
         }
 
         const extraction = await extractResumeDetails({
@@ -69,13 +68,13 @@ export default function FlowExtract() {
     if (successCount > 0) {
       toast({ 
         title: "Batch Complete", 
-        description: `Successfully extracted ${successCount} profile(s).${failCount > 0 ? ` ${failCount} failed due to service demand.` : ''}` 
+        description: `Extracted ${successCount} profile(s).${failCount > 0 ? ` ${failCount} failed due to demand.` : ''}` 
       });
     } else if (failCount > 0) {
       toast({ 
         variant: "destructive", 
-        title: "Extraction Failed", 
-        description: "The AI service is currently overloaded (503). Please try a smaller batch or wait a moment." 
+        title: "Service Overloaded", 
+        description: "The AI service is experiencing high demand. Please try a smaller batch." 
       });
     }
     
@@ -92,7 +91,7 @@ export default function FlowExtract() {
       });
       if (extraction) {
         setCandidates((prev) => [extraction, ...prev]);
-        toast({ title: "Intelligence Extracted", description: "Profile successfully parsed from pasted content." });
+        toast({ title: "Extraction Complete", description: "Profile parsed successfully." });
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Extraction Failed", description: error.message });
@@ -120,13 +119,13 @@ export default function FlowExtract() {
       <div className="flex-1 flex flex-col">
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
-            High Precision Batch Extraction
+            AI-Powered Intelligence Dashboard
           </div>
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tight leading-none">
-            Smart Resume <span className="text-primary italic">Intelligence</span>
+            Scale Your <span className="text-primary italic">Recruitment</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Drag files, paste text, or use <span className="text-foreground font-semibold">Ctrl+V</span> directly from attachments. Multi-modal AI handles PDFs and images instantly.
+            Drag files from folders or paste attachments from email. Multi-modal AI handles 15+ resumes with high precision.
           </p>
         </div>
 
@@ -138,7 +137,7 @@ export default function FlowExtract() {
       </div>
 
       <footer className="py-8 border-t border-border/50 text-center text-[10px] text-muted-foreground font-headline tracking-[0.2em] uppercase mt-auto">
-        FlowExtract Intelligence &bull; Powered by Multi-Modal AI &bull; {new Date().getFullYear()}
+        FlowExtract Engine &bull; {new Date().getFullYear()}
       </footer>
 
       <Toaster />
