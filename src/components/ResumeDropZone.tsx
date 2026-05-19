@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, FileText, Loader2, Sparkles } from "lucide-react";
+import { Upload, FileText, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ResumeDropZoneProps {
@@ -11,6 +11,19 @@ interface ResumeDropZoneProps {
 
 export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
+
+  const isValidFile = (file: File) => {
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const validExtensions = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'webp'];
+    const validMimeTypes = [
+      "text/plain",
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
+    return validExtensions.includes(extension || '') || validMimeTypes.includes(file.type);
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -26,11 +39,7 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
     e.preventDefault();
     setIsDragging(false);
     
-    const files = Array.from(e.dataTransfer.files).filter((file) => {
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      const validExtensions = ['txt', 'pdf'];
-      return validExtensions.includes(extension || '') || file.type === "text/plain" || file.type === "application/pdf";
-    });
+    const files = Array.from(e.dataTransfer.files).filter(isValidFile);
 
     if (files.length > 0) {
       onFilesDropped(files);
@@ -38,11 +47,7 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
   }, [onFilesDropped]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []).filter((file) => {
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      const validExtensions = ['txt', 'pdf'];
-      return validExtensions.includes(extension || '') || file.type === "text/plain" || file.type === "application/pdf";
-    });
+    const files = Array.from(e.target.files || []).filter(isValidFile);
     
     if (files.length > 0) {
       onFilesDropped(files);
@@ -66,7 +71,7 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
         <input 
           type="file" 
           multiple 
-          accept=".pdf,.txt" 
+          accept=".pdf,.txt,.png,.jpg,.jpeg,.webp" 
           className="hidden" 
           onChange={handleFileInput}
           disabled={isProcessing}
@@ -98,18 +103,18 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
               {isProcessing ? "Extracting Intelligence..." : isDragging ? "Release to Extract" : "Drop Resumes Here"}
             </h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              Drag and drop multiple text or PDF resumes, or click to browse.
+              Drag and drop multiple PDF, Images, or Text resumes, or click to browse.
             </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 bg-background border rounded-lg text-xs font-medium text-muted-foreground group-hover:border-primary/30 transition-all">
               <FileText className="w-3.5 h-3.5" />
-              <span>PDF Supported</span>
+              <span>PDF / TXT</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-background border rounded-lg text-xs font-medium text-muted-foreground group-hover:border-primary/30 transition-all">
-              <FileText className="w-3.5 h-3.5" />
-              <span>TEXT Supported</span>
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Images (JPG/PNG)</span>
             </div>
           </div>
         </div>
