@@ -11,26 +11,42 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ExtractionConfig } from "./ExtractionConfigBar";
 import { ExtractResumeDetailsOutput } from "@/ai/flows/extract-resume-details-flow";
-import { User, Mail, Phone, Briefcase, Building2, GraduationCap, LayoutGrid } from "lucide-react";
+import { User, Mail, Phone, Briefcase, Building2, GraduationCap, LayoutGrid, SearchX, Loader2 } from "lucide-react";
 
 interface CandidateTableProps {
   candidates: ExtractResumeDetailsOutput[];
   config: ExtractionConfig;
+  isProcessing?: boolean;
 }
 
-export function CandidateTable({ candidates, config }: CandidateTableProps) {
-  if (candidates.length === 0) return null;
+export function CandidateTable({ candidates, config, isProcessing }: CandidateTableProps) {
+  if (candidates.length === 0 && !isProcessing) return (
+    <div className="max-w-7xl mx-auto w-full px-6 py-12 text-center animate-in fade-in duration-1000">
+      <div className="bg-card/20 border border-dashed border-border rounded-3xl p-12 flex flex-col items-center gap-4">
+        <SearchX className="w-12 h-12 text-muted-foreground/30" />
+        <p className="text-muted-foreground font-headline">No candidates processed yet.</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto w-full px-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-headline font-bold flex items-center gap-3">
           <User className="w-6 h-6 text-primary" />
-          Processed Candidates
+          Candidate Dashboard
         </h2>
-        <Badge variant="outline" className="px-3 py-1 border-primary/30 text-primary font-headline">
-          {candidates.length} Resumes Parsed
-        </Badge>
+        <div className="flex items-center gap-3">
+          {isProcessing && (
+            <div className="flex items-center gap-2 text-xs text-primary animate-pulse">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Parsing files...</span>
+            </div>
+          )}
+          <Badge variant="outline" className="px-3 py-1 border-primary/30 text-primary font-headline">
+            {candidates.length} Profiles Extracted
+          </Badge>
+        </div>
       </div>
       
       <div className="rounded-2xl border border-border bg-card/30 overflow-hidden shadow-xl backdrop-blur-sm">
@@ -39,14 +55,21 @@ export function CandidateTable({ candidates, config }: CandidateTableProps) {
             <TableRow className="hover:bg-transparent border-border">
               {config.email && <TableHead className="font-headline font-bold text-foreground">Email</TableHead>}
               {config.phone && <TableHead className="font-headline font-bold text-foreground">Phone</TableHead>}
-              {config.college && <TableHead className="font-headline font-bold text-foreground">College</TableHead>}
-              {config.suggestedProfiles && <TableHead className="font-headline font-bold text-foreground">Suggested Profiles</TableHead>}
-              {config.skills && <TableHead className="font-headline font-bold text-foreground">Top Skills</TableHead>}
-              {config.experience && <TableHead className="font-headline font-bold text-foreground">Latest Exp</TableHead>}
-              {config.companies && <TableHead className="font-headline font-bold text-foreground">Companies</TableHead>}
+              {config.college && <TableHead className="font-headline font-bold text-foreground">Education</TableHead>}
+              {config.suggestedProfiles && <TableHead className="font-headline font-bold text-foreground">Fit Roles</TableHead>}
+              {config.skills && <TableHead className="font-headline font-bold text-foreground">Expertise</TableHead>}
+              {config.experience && <TableHead className="font-headline font-bold text-foreground">Latest Summary</TableHead>}
+              {config.companies && <TableHead className="font-headline font-bold text-foreground">History</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
+            {candidates.length === 0 && isProcessing && (
+               <TableRow className="animate-pulse bg-primary/[0.02]">
+                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">
+                   Extracting intelligence from your documents...
+                 </TableCell>
+               </TableRow>
+            )}
             {candidates.map((candidate, idx) => (
               <TableRow key={idx} className="group border-border hover:bg-primary/[0.03] transition-colors">
                 {config.email && (

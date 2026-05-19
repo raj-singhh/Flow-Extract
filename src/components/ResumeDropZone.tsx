@@ -25,17 +25,33 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter(
-      (file) => file.type === "text/plain" || file.name.endsWith(".txt") || file.type === "application/pdf"
-    );
+    
+    const files = Array.from(e.dataTransfer.files).filter((file) => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      const validExtensions = ['txt', 'pdf'];
+      return validExtensions.includes(extension || '') || file.type === "text/plain" || file.type === "application/pdf";
+    });
+
     if (files.length > 0) {
       onFilesDropped(files);
     }
   }, [onFilesDropped]);
 
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []).filter((file) => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      const validExtensions = ['txt', 'pdf'];
+      return validExtensions.includes(extension || '') || file.type === "text/plain" || file.type === "application/pdf";
+    });
+    
+    if (files.length > 0) {
+      onFilesDropped(files);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto w-full px-6 mb-12">
-      <div
+      <label
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -47,6 +63,15 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
           isProcessing && "pointer-events-none opacity-80"
         )}
       >
+        <input 
+          type="file" 
+          multiple 
+          accept=".pdf,.txt" 
+          className="hidden" 
+          onChange={handleFileInput}
+          disabled={isProcessing}
+        />
+        
         {/* Decorative Background Elements */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-32 h-32 bg-primary blur-3xl -translate-x-1/2 -translate-y-1/2" />
@@ -73,7 +98,7 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
               {isProcessing ? "Extracting Intelligence..." : isDragging ? "Release to Extract" : "Drop Resumes Here"}
             </h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              Drag and drop multiple text or PDF resumes to instantly parse contact info and skills with AI.
+              Drag and drop multiple text or PDF resumes, or click to browse.
             </p>
           </div>
 
@@ -93,7 +118,7 @@ export function ResumeDropZone({ onFilesDropped, isProcessing }: ResumeDropZoneP
         {isDragging && (
           <div className="absolute inset-0 border-4 border-primary/20 rounded-3xl animate-pulse" />
         )}
-      </div>
+      </label>
     </div>
   );
 }

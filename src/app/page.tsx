@@ -29,6 +29,8 @@ export default function FlowExtract() {
   };
 
   const processFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    
     setIsProcessing(true);
     const results: ExtractResumeDetailsOutput[] = [];
 
@@ -43,20 +45,29 @@ export default function FlowExtract() {
           extractConfig: config,
         });
         
-        results.push(extraction);
+        if (extraction) {
+          results.push(extraction);
+        }
       }
       
-      setCandidates((prev) => [...results, ...prev]);
-      toast({
-        title: "Extraction Complete",
-        description: `Successfully processed ${files.length} resume(s).`,
-      });
-    } catch (error) {
+      if (results.length > 0) {
+        setCandidates((prev) => [...results, ...prev]);
+        toast({
+          title: "Extraction Complete",
+          description: `Successfully processed ${results.length} resume(s).`,
+        });
+      } else {
+        toast({
+          title: "No Data Found",
+          description: "Could not extract information from the provided files.",
+        });
+      }
+    } catch (error: any) {
       console.error("Extraction error:", error);
       toast({
         variant: "destructive",
         title: "Extraction Failed",
-        description: "An error occurred while parsing the resumes.",
+        description: error.message || "An error occurred while parsing the resumes.",
       });
     } finally {
       setIsProcessing(false);
@@ -66,12 +77,21 @@ export default function FlowExtract() {
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
       
-      if (file.type === "application/pdf") {
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      
+      reader.onerror = () => {
+        reject(new Error(`Failed to read file: ${file.name}`));
+      };
+      
+      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      
+      if (isPDF) {
         // Mocking PDF to Text for this prototype
-        resolve(`[PDF CONTENT MOCK: ${file.name}]\nExperience: Senior Software Engineer at Tech Corp (2020-2023). Skills: React, TypeScript, Next.js. Contact: john.doe@example.com, 555-123-4567. Education: Bachelor of Science at Stanford University.`);
+        // In a real app, you'd use a library like pdfjs-dist
+        resolve(`[PDF CONTENT MOCK: ${file.name}]\nExperience: Senior Software Engineer at Tech Corp (2020-2023). Skills: React, TypeScript, Next.js. Contact: dev@example.com, 555-999-0000. Education: Master of Science at MIT. Recent Role: Software Architect.`);
       } else {
         reader.readAsText(file);
       }
@@ -93,11 +113,11 @@ export default function FlowExtract() {
       <div className="flex-1 flex flex-col">
         {/* Dynamic Header Space */}
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
-          <h2 className="text-4xl md:text-5xl font-headline font-bold mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-headline font-bold mb-4 tracking-tight animate-in fade-in slide-in-from-top-4 duration-500">
             Resume Data <span className="text-primary">Extraction</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Our AI analyzes your documents in real-time, pulling only the details you need for your hiring pipeline.
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-in fade-in slide-in-from-top-6 duration-700">
+            Drop your resumes below. Our AI parses skills, education, and profiles in seconds.
           </p>
         </div>
 
@@ -108,7 +128,7 @@ export default function FlowExtract() {
         <ResumeDropZone onFilesDropped={processFiles} isProcessing={isProcessing} />
         
         {/* Result Table */}
-        <CandidateTable candidates={candidates} config={config} />
+        <CandidateTable candidates={candidates} config={config} isProcessing={isProcessing} />
       </div>
 
       {/* Subtle Footer */}
