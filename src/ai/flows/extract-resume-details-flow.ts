@@ -39,6 +39,8 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   name: 'extractResumeDetailsPrompt',
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
+  // Explicitly set model to avoid 404 issues with global defaults
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are an elite Recruitment Data Scientist. Your task is to extract candidate information with 100% precision from the provided resume source.
 
 Source Data:
@@ -65,7 +67,9 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 3, delay = 25
   try {
     return await fn();
   } catch (error: any) {
-    const isRetryable = error?.message?.includes('503') || error?.message?.includes('429') || error?.message?.includes('Service Unavailable');
+    const errorMsg = error?.message || '';
+    const isRetryable = errorMsg.includes('503') || errorMsg.includes('429') || errorMsg.includes('Service Unavailable');
+    
     if (retries > 0 && isRetryable) {
       console.log(`AI busy, retrying in ${delay}ms... (${retries} retries left)`);
       await new Promise((resolve) => setTimeout(resolve, delay));
