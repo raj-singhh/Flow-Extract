@@ -39,7 +39,6 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   name: 'extractResumeDetailsPrompt',
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
-  // Explicitly set model to avoid 404 issues with global defaults
   model: 'googleai/gemini-1.5-flash',
   prompt: `You are an elite Recruitment Data Scientist. Your task is to extract candidate information with 100% precision from the provided resume source.
 
