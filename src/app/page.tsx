@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,8 @@ import { CandidateTable } from "@/components/CandidateTable";
 import { extractResumeDetails, type ExtractResumeDetailsOutput } from "@/ai/flows/extract-resume-details-flow";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
+
+const MAX_BATCH_SIZE = 15;
 
 export default function FlowExtract() {
   const { toast } = useToast();
@@ -36,8 +39,17 @@ export default function FlowExtract() {
 
   const processFiles = async (files: File[]) => {
     if (files.length === 0) return;
-    setIsProcessing(true);
     
+    if (files.length > MAX_BATCH_SIZE) {
+      toast({ 
+        variant: "destructive", 
+        title: "Batch Limit Exceeded", 
+        description: `Please upload a maximum of ${MAX_BATCH_SIZE} resumes at once.` 
+      });
+      return;
+    }
+
+    setIsProcessing(true);
     let successCount = 0;
     let failCount = 0;
 
@@ -45,9 +57,9 @@ export default function FlowExtract() {
       try {
         const fileDataUri = await readFileAsDataUri(file);
         
-        // Add a 1.2s delay between items to respect rate limits during batch
+        // Jittered delay to respect rate limits during batch processing
         if (successCount > 0 || failCount > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1200));
+          await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
         const extraction = await extractResumeDetails({
@@ -67,14 +79,14 @@ export default function FlowExtract() {
 
     if (successCount > 0) {
       toast({ 
-        title: "Batch Complete", 
-        description: `Extracted ${successCount} profile(s).${failCount > 0 ? ` ${failCount} failed due to demand.` : ''}` 
+        title: "Extraction Complete", 
+        description: `Successfully processed ${successCount} profile(s).${failCount > 0 ? ` ${failCount} failed due to demand.` : ''}` 
       });
     } else if (failCount > 0) {
       toast({ 
         variant: "destructive", 
         title: "Service Overloaded", 
-        description: "The AI service is experiencing high demand. Please try a smaller batch." 
+        description: "The AI service is experiencing high demand. Please try a smaller batch in a few minutes." 
       });
     }
     
@@ -94,7 +106,7 @@ export default function FlowExtract() {
         toast({ title: "Extraction Complete", description: "Profile parsed successfully." });
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Extraction Failed", description: error.message });
+      toast({ variant: "destructive", title: "Extraction Failed", description: "The AI service is currently busy. Please try again." });
     } finally {
       setIsProcessing(false);
     }
@@ -119,13 +131,13 @@ export default function FlowExtract() {
       <div className="flex-1 flex flex-col">
         <div className="py-12 px-6 max-w-7xl mx-auto w-full text-center">
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
-            AI-Powered Intelligence Dashboard
+            High-Precision Intelligence Engine
           </div>
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tight leading-none">
             Scale Your <span className="text-primary italic">Recruitment</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Drag files from folders or paste attachments from email. Multi-modal AI handles 15+ resumes with high precision.
+            Drag attachments from email or paste raw text. Multi-modal AI handles up to 15 resumes with extreme precision.
           </p>
         </div>
 

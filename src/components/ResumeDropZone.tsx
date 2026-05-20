@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Upload, Loader2, Sparkles, ClipboardPaste, MousePointer2 } from "lucide-react";
+import { Upload, Loader2, Sparkles, ClipboardPaste, MousePointer2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,14 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
     }
 
     if (files.length > 0) {
+      if (files.length > 15) {
+        toast({ 
+          variant: "destructive", 
+          title: "Batch Limit", 
+          description: "Max 15 resumes per paste session." 
+        });
+        return;
+      }
       toast({ 
         title: "Fast-Paste Detected", 
         description: `Extracting data from ${files.length} clipboard file(s)...` 
@@ -99,17 +108,16 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
     <div className="max-w-7xl mx-auto w-full px-6 mb-12 flex flex-col gap-4">
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
         <div className="flex items-center gap-2 text-xs font-headline font-bold text-primary uppercase tracking-tighter">
-          <Sparkles className="w-4 h-4" />
-          Quick Workflow:
+          <AlertCircle className="w-4 h-4" />
+          Batch Guidelines:
         </div>
         <div className="flex flex-wrap justify-center gap-3">
           <Badge variant="outline" className="bg-background/80 flex items-center gap-1.5 py-1">
-            <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px]">Ctrl+C</kbd>
-            <span className="text-[10px]">Attachment</span>
+            <span className="text-[10px] font-bold">Max 15 Resumes</span>
           </Badge>
           <Badge variant="outline" className="bg-background/80 flex items-center gap-1.5 py-1">
             <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px]">Ctrl+V</kbd>
-            <span className="text-[10px]">Anywhere here</span>
+            <span className="text-[10px]">Supported</span>
           </Badge>
         </div>
       </div>
@@ -166,17 +174,17 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
                 <div className="relative">
                    <Upload className="w-12 h-12" />
                    <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full animate-bounce">
-                     Batch
+                     Max 15
                    </div>
                 </div>
               )}
             </div>
             <div className="space-y-3">
               <h3 className="text-3xl font-headline font-bold tracking-tight">
-                {isProcessing ? "Analyzing..." : isDragging ? "Extracting" : "Drop or Ctrl+V"}
+                {isProcessing ? "Precision Analysis..." : isDragging ? "Extracting" : "Drop or Paste"}
               </h3>
               <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                Copy an attachment from Gmail/Outlook and <span className="text-primary font-bold italic">Paste (Ctrl+V)</span> directly here.
+                Copy attachments from your email and <span className="text-primary font-bold italic">Paste (Ctrl+V)</span> directly here. Batch limit is 15.
               </p>
             </div>
           </div>
@@ -203,7 +211,7 @@ export function ResumeDropZone({ onFilesDropped, onTextPasted, isProcessing }: R
             ) : (
               <Sparkles className="mr-2 h-5 w-5" />
             )}
-            Extract Candidate Intel
+            Extract Candidate Intelligence
           </Button>
         </div>
       )}

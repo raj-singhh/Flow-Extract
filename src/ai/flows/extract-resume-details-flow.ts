@@ -1,6 +1,8 @@
+
 'use server';
 /**
  * @fileOverview High-precision extraction flow for candidate resumes.
+ * This flow extracts detailed academic and professional data with extreme accuracy.
  */
 
 import { ai } from '@/ai/genkit';
@@ -28,8 +30,8 @@ const ExtractResumeDetailsOutputSchema = z.object({
   skills: z.array(z.string()).optional(),
   experience: z.array(z.string()).optional().describe('Format: "Company - Role, Duration"'),
   companies: z.array(z.string()).optional(),
-  college: z.string().optional().describe('Format: "College Name - Score/Percentage"'),
-  suggestedProfiles: z.array(z.string()).optional(),
+  college: z.string().optional().describe('Format: "Full College Name - Percentage/GPA/Score"'),
+  suggestedProfiles: z.array(z.string()).optional().describe('List of 3+ highly specific professional titles.'),
   totalExperience: z.string().optional().describe('Format: "X.X years"'),
 });
 export type ExtractResumeDetailsOutput = z.infer<typeof ExtractResumeDetailsOutputSchema>;
@@ -38,32 +40,35 @@ const extractResumeDetailsPrompt = ai.definePrompt({
   name: 'extractResumeDetailsPrompt',
   input: { schema: ExtractResumeDetailsInputSchema },
   output: { schema: ExtractResumeDetailsOutputSchema },
-  prompt: `You are an expert recruitment AI. Extract and analyze candidate information with extreme precision.
+  prompt: `You are an elite Recruitment Data Scientist. Your task is to extract candidate information with 100% precision from the provided resume source.
 
 Source Data:
 {{#if text}}
-RAW TEXT:
+RAW TEXT CONTENT:
 {{{text}}}
 {{/if}}
 {{#if fileDataUri}}
-FILE:
+RESUME FILE (IMAGE/PDF):
 {{media url=fileDataUri}}
 {{/if}}
 
-Requirements:
-- Extract academic percentage or GPA with the college name.
-- Calculate total professional experience (YOE) as a single number string (e.g. "5.2 years").
-- List experience as "Company - Role, Duration".
-- Suggest 3+ professional job profiles based on skills.
-- Identify all technical and soft skills.`,
+STRICT EXTRACTION RULES:
+1. COLLEGE & SCORE: Find the full, official name of the university/college. Identify the final academic score (Percentage, CGPA, or GPA). Combine as "College Name - Score".
+2. TOTAL EXPERIENCE (YOE): Analyze the work history dates. Calculate the total aggregate professional experience and express it as a decimal string followed by "years" (e.g., "4.5 years").
+3. WORK HISTORY: List experience as "Company Name - Role Title, Duration". Be very specific about company names.
+4. SKILLS: Identify all technical stacks, soft skills, and certifications. Be exhaustive but accurate.
+5. SUGGESTED PROFILES: Based on the candidate's deep skill set and experience level, suggest the 3-5 most appropriate professional roles (e.g., "Senior Fullstack Engineer", "Product Lead").
+
+Be precise. If information is missing, leave the field blank.`,
 });
 
-async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 3, delay = 2000): Promise<T> {
+async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 3, delay = 2500): Promise<T> {
   try {
     return await fn();
   } catch (error: any) {
-    const isRetryable = error?.message?.includes('503') || error?.message?.includes('429');
+    const isRetryable = error?.message?.includes('503') || error?.message?.includes('429') || error?.message?.includes('Service Unavailable');
     if (retries > 0 && isRetryable) {
+      console.log(`AI busy, retrying in ${delay}ms... (${retries} retries left)`);
       await new Promise((resolve) => setTimeout(resolve, delay));
       return retryWithBackoff(fn, retries - 1, delay * 2);
     }
@@ -88,7 +93,7 @@ const extractResumeDetailsFlow = ai.defineFlow(
     });
 
     if (!response) {
-      throw new Error('Service currently unavailable. Please try again in a moment.');
+      throw new Error('Service currently unavailable. Please try again later.');
     }
     return response;
   }
