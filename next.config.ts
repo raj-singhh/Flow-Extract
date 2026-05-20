@@ -1,7 +1,8 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Keep pdf-parse and pdfjs-dist on the server only — never bundle for client/SSR renderer
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist'],
   typescript: {
     ignoreBuildErrors: true,
   },
